@@ -1,6 +1,7 @@
 package db
 
 import (
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -13,6 +14,7 @@ type Conn struct {
 var (
 	instance  *Conn
 	initCount int32
+	once sync.Once
 )
 
 // GetDB returns the shared Conn, creating it on first use.
@@ -23,9 +25,12 @@ var (
 // call GetDB() concurrently. `go test -race ./internal/db/...` should pass
 // once this is fixed.
 func GetDB() *Conn {
-	if instance == nil {
-		instance = connect()
-	}
+	once.Do(func() {
+		if instance == nil {
+			instance = connect()
+		}
+	})
+
 	return instance
 }
 
