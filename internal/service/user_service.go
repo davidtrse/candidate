@@ -14,10 +14,6 @@ import (
 // an expected business case like "not found". Change the signature to
 // return (model.User, error) instead of panicking, and propagate ctx and
 // the repository error unchanged.
-func GetUser(ctx context.Context, id int64) model.User {
-	u, err := repository.GetUser(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return u
+func GetUser(ctx context.Context, id int64) (model.User, error) {
+	return repository.GetUser(ctx, id)
 }

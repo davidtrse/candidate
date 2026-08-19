@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
+	"goassessment/internal/repository"
 	"goassessment/internal/service"
 )
 
@@ -24,8 +26,19 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	ctx := context.Background()
-	u := service.GetUser(ctx, id)
+	if id < 1 {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 2 * time.Second)
+	defer cancel()
+
+	u,e := service.GetUser(ctx, id)
+	if e == repository.ErrNotFound {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)

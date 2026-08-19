@@ -22,13 +22,31 @@ var seed = map[int64]model.User{
 // respect ctx cancellation/deadline and return ctx.Err() if it fires before
 // the query finishes.
 func GetUser(ctx context.Context, id int64) (model.User, error) {
-	simulateSlowQuery()
-
-	u, ok := seed[id]
-	if !ok {
-		return model.User{}, ErrNotFound
+	type Result struct {
+		u model.User
+		e error
 	}
-	return u, nil
+
+	buffered := make(chan Result, 1)
+
+	go func() {
+		simulateSlowQuery()
+		u, ok := seed[id]
+		if !ok {
+			buffered <- Result{model.User{}, ErrNotFound}
+			return
+		}
+		buffered <- Result{u, nil}
+	}()
+
+	select {
+
+	case r := <- buffered:
+		return r.u, r.e
+
+	case <- ctx.Done():
+		return model.User{}, ctx.Err()
+	}
 }
 
 func simulateSlowQuery() {

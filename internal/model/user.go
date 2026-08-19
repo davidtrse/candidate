@@ -11,6 +11,6 @@ type User struct {
 //
 // TODO(candidate): as written, callers never see the change take effect.
 // Fix the receiver type so this method mutates the caller's User.
-func (u User) UpdateName(name string) {
+func (u *User) UpdateName(name string) {
 	u.Name = name
 }
